@@ -57,90 +57,105 @@ DHT dht(DHTPIN, DHTTYPE, 11);
 int notConnected = LED_BUILTIN;
 
 void setupWiFi(){
-	Serial.println("\nConnecting...");
-	WiFi.begin(WIFI_SSID, WIFI_PASS);
+  Serial.println("\nConnecting...");
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
 
-	while(WiFi.status() != WL_CONNECTED){
-		Serial.print(".");
-		digitalWrite(notConnected, LOW);
-		delay(500);
-	}
+  while(WiFi.status() != WL_CONNECTED){
+    Serial.print(".");
+    digitalWrite(notConnected, LOW);
+    delay(500);
+  }
 
-	Serial.println("\nConnected : ");
-	Serial.println(WiFi.localIP());
-	digitalWrite(notConnected,HIGH);
+  Serial.println("\nConnected : ");
+  Serial.println(WiFi.localIP());
+  digitalWrite(notConnected,HIGH);
 
 }
 
 void setupFirebase(){
-	Firebase.begin(FIREBASE_URL, FIREBASE_KEY);
+  Firebase.begin(FIREBASE_URL, FIREBASE_KEY);
 }
 
 void setup(){
-	pinMode(S0, OUTPUT);
-	pinMode(S1, OUTPUT);     
-	pinMode(S2, OUTPUT);
+  pinMode(S0, OUTPUT);
+  pinMode(S1, OUTPUT);     
+  pinMode(S2, OUTPUT);
 
-	pinMode(notConnected,OUTPUT);
-	
-	Serial.begin(9600);
-	dht.begin();
-	setupWiFi();
-	setupFirebase();
+  pinMode(notConnected,OUTPUT);
+  
+  Serial.begin(9600);
+  dht.begin();
+  setupWiFi();
+  setupFirebase();
 }
 
 float readHeartBeat(){
-	digitalWrite(S0, LOW);
-	digitalWrite(S1, LOW);
-	digitalWrite(S2, LOW);
-	return analogRead(ANALOG_INPUT);
+  digitalWrite(S0, LOW);
+  digitalWrite(S1, LOW);
+  digitalWrite(S2, LOW);
+  return analogRead(ANALOG_INPUT);
 }
 
 float readAudio(){
-	digitalWrite(S0, HIGH);
-	digitalWrite(S1, LOW);
-	digitalWrite(S2, LOW);
-	return map(analogRead(ANALOG_INPUT),1032,0,0,1023);
+  digitalWrite(S0, HIGH);
+  digitalWrite(S1, LOW);
+  digitalWrite(S2, LOW);
+  return map(analogRead(ANALOG_INPUT),1032,0,0,1023);
+}
+
+float readLight(){
+  digitalWrite(S0, LOW);
+  digitalWrite(S1, HIGH);
+  digitalWrite(S2, LOW);
+  return map(analogRead(ANALOG_INPUT),0,1023,0,100);
 }
 
 void loop(){
-	int audio = readAudio();
-	int heartBeat = readHeartBeat();
-	int humidity = dht.readHumidity();
-	int temperature = dht.readTemperature();
+  int audio = readAudio();
+  int heartBeat = readHeartBeat();
+  int light = readLight();
+  int humidity = dht.readHumidity();
+  int temperature = dht.readTemperature();
  
-	Serial.print("Audio: ");
-	Serial.print(audio);
-	Serial.print("\tHeartBeat: ");
-	Serial.print(heartBeat);
-	Serial.print("\tHumidity: ");
-	Serial.print(humidity); 
-	Serial.print("\tTemperature: ");
-	Serial.println(temperature);
+  Serial.print("Audio: ");
+  Serial.print(audio);
+  Serial.print("\tHeartBeat: ");
+  Serial.print(heartBeat);
+  Serial.print("\tLight: ");
+  Serial.print(light);
+  Serial.print("\tHumidity: ");
+  Serial.print(humidity); 
+  Serial.print("\tTemperature: ");
+  Serial.println(temperature);
 
-	Firebase.setFloat("audio/lastAudio", audio);
-	Serial.print(Firebase.success());
-	Firebase.pushFloat("audio", audio);
-	Serial.print(Firebase.success());
+  Firebase.setFloat("audio/lastAudio", audio);
+  Serial.print(Firebase.success());
+  Firebase.pushFloat("audio", audio);
+  Serial.print(Firebase.success());
 
-	Firebase.setFloat("heartBeat/lastHeartBeat", heartBeat);
-	Serial.print(Firebase.success());
-	Firebase.pushFloat("heartBeat", heartBeat);
-	Serial.println(Firebase.success());
+  Firebase.setFloat("heartBeat/lastHeartBeat", heartBeat);
+  Serial.print(Firebase.success());
+  Firebase.pushFloat("heartBeat", heartBeat);
+  Serial.print(Firebase.success());
 
-	Firebase.setFloat("humidity/lastHumidity", humidity);
-	Serial.print(Firebase.success());
-	Firebase.pushFloat("humidity", humidity);
-	Serial.print(Firebase.success());
+  Firebase.setFloat("lightIntensity/lastLightIntensity", light);
+  Serial.print(Firebase.success());
+  Firebase.pushFloat("lightIntensity", light);
+  Serial.print(Firebase.success());
 
-	Firebase.setFloat("temperature/lastTemperature", temperature);
-	Serial.print(Firebase.success());
-	Firebase.pushFloat("temperature", temperature);
-	Serial.println(Firebase.success());
+  Firebase.setFloat("humidity/lastHumidity", humidity);
+  Serial.print(Firebase.success());
+  Firebase.pushFloat("humidity", humidity);
+  Serial.print(Firebase.success());
 
-	if(Firebase.failed()){
-		Serial.println(Firebase.error());
-	}
-	
-	
+  Firebase.setFloat("temperature/lastTemperature", temperature);
+  Serial.print(Firebase.success());
+  Firebase.pushFloat("temperature", temperature);
+  Serial.println(Firebase.success());
+
+  if(Firebase.failed()){
+    Serial.println(Firebase.error());
+  }
+ 
+  
 }
